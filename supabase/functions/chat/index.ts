@@ -13,30 +13,36 @@ serve(async (req) => {
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     const userText = messages[messages.length - 1].content;
 
-    // Stable URL for 2026
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // --- STRATEGY: Try Stable v1 Endpoint First ---
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: userText }] }]
-      }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: userText }] }] }),
     });
 
-    const data = await response.json();
+    let data = await response.json();
 
-    // AGAR DATA KHALI HAI, TOH PURA JSON DIKHAO
-    if (!data.candidates || data.candidates.length === 0) {
-      return new Response(JSON.stringify({ 
-        content: `Debug Info: Google sent no text. Raw Response: ${JSON.stringify(data).substring(0, 200)}` 
-      }), {
+    // --- FALLBACK: If 404 (Not Found), Try Gemini Pro ---
+    if (data.error && data.error.code === 404) {
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`;
+      response = await fetch(fallbackUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: userText }] }] }),
+      });
+      data = await response.json();
+    }
+
+    if (data.error) {
+      return new Response(JSON.stringify({ content: `Google error: ${data.error.message}` }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const aiText = data.candidates[0].content.parts[0].text;
-
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No text generated.";
+    
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
