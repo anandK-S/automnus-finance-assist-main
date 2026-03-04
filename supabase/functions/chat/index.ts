@@ -11,13 +11,10 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("GEMINI_API_KEY");
-    
-    if (!apiKey) return new Response(JSON.stringify({ content: "Error: API Key missing in Supabase!" }), { headers: corsHeaders });
-
     const userText = messages[messages.length - 1].content;
 
-    // FIX: v1beta ki jagah Stable 'v1' aur model name 'gemini-1.5-flash'
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Stable URL for 2026
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -29,12 +26,16 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    // Agar model nahi milta toh stable 'gemini-pro' try karega (Fallback)
-    if (data.error) {
-       return new Response(JSON.stringify({ content: `Google API Error: ${data.error.message}` }), { headers: corsHeaders });
+    // AGAR DATA KHALI HAI, TOH PURA JSON DIKHAO
+    if (!data.candidates || data.candidates.length === 0) {
+      return new Response(JSON.stringify({ 
+        content: `Debug Info: Google sent no text. Raw Response: ${JSON.stringify(data).substring(0, 200)}` 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne khali response bheja.";
+    const aiText = data.candidates[0].content.parts[0].text;
 
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
