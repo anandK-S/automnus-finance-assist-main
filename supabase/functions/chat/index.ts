@@ -12,32 +12,40 @@ serve(async (req) => {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     
-    if (!apiKey) return new Response(JSON.stringify({ content: "Error: API Key missing in Supabase Secrets!" }), { headers: corsHeaders });
-
+    // Last message nikalna
     const userText = messages[messages.length - 1].content;
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: userText }] }]
-      })
-    });
+    // Google API ko call karna (Thoda aur simple format)
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userText }] }]
+        }),
+      }
+    );
 
-    const data = await res.json();
+    const data = await response.json();
 
-    // AGAR GOOGLE ERROR DE RAHA HAI TOH WO DIKHAO
+    // Check agar Google ne error diya
     if (data.error) {
-      return new Response(JSON.stringify({ content: `Google Error: ${data.error.message}` }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ content: `Google Error: ${data.error.message}` }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI candidates.";
+    // Extract text (Added more safety checks)
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne koi text nahi bheja. Check API Key status.";
 
-    return new Response(JSON.stringify({ content: reply }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    return new Response(JSON.stringify({ content: aiText }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  } catch (err) {
-    return new Response(JSON.stringify({ content: `Backend Error: ${err.message}` }), { headers: corsHeaders });
+  } catch (e) {
+    return new Response(JSON.stringify({ content: `Backend Crash: ${e.message}` }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
