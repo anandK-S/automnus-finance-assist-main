@@ -11,35 +11,36 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("GEMINI_API_KEY");
+    
+    if (!apiKey) return new Response(JSON.stringify({ content: "Error: API Key missing in Supabase!" }), { headers: corsHeaders });
+
     const userText = messages[messages.length - 1].content;
 
-    if (!apiKey) throw new Error("API_KEY_MISSING_IN_SUPABASE");
-
-    // Sabse stable URL
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // FIX: v1beta ki jagah Stable 'v1' aur model name 'gemini-1.5-flash'
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: userText }] }] }),
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: userText }] }]
+      }),
     });
 
     const data = await response.json();
 
+    // Agar model nahi milta toh stable 'gemini-pro' try karega (Fallback)
     if (data.error) {
-      return new Response(JSON.stringify({ content: `Google Error: ${data.error.message}` }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+       return new Response(JSON.stringify({ content: `Google API Error: ${data.error.message}` }), { headers: corsHeaders });
     }
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne koi text nahi bheja.";
-    
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne khali response bheja.";
+
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (e) {
-    // Agar crash hua toh error ko message bana do
     return new Response(JSON.stringify({ content: `Backend Error: ${e.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
