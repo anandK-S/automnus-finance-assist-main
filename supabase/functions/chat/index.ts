@@ -6,15 +6,21 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // CORS handle karna
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("GEMINI_API_KEY");
+    
+    if (!apiKey) {
+      return new Response(JSON.stringify({ content: "Error: Supabase mein API Key nahi mili!" }), { headers: corsHeaders });
+    }
+
     const userText = messages[messages.length - 1].content;
 
-    // SABSE STABLE URL: v1beta + gemini-1.5-flash-latest
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // Sabse robust URL jo 2026 mein kaam kar raha hai
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -26,19 +32,20 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    // Agar model nahi mila toh fallback to 'gemini-pro'
-    if (data.error && data.error.message.includes("not found")) {
-       return new Response(JSON.stringify({ content: "Google Flash model nahi mil raha. Ek baar API Key check karein ya Gemini Pro try karein." }), { headers: corsHeaders });
+    // Agar Google ne koi error diya toh use direct dikhao
+    if (data.error) {
+      return new Response(JSON.stringify({ content: `Google ne bola: ${data.error.message}` }), { headers: corsHeaders });
     }
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "AI ne koi text generate nahi kiya.";
+    // Response nikalna
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne khali jawab bheja hai.";
 
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (e) {
-    return new Response(JSON.stringify({ content: `Backend Error: ${e.message}` }), {
+    return new Response(JSON.stringify({ content: `Server Error: ${e.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
