@@ -6,46 +6,41 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // CORS handle karna
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("GEMINI_API_KEY");
-    
-    if (!apiKey) {
-      return new Response(JSON.stringify({ content: "Error: Supabase mein API Key nahi mili!" }), { headers: corsHeaders });
-    }
-
     const userText = messages[messages.length - 1].content;
 
-    // Sabse robust URL jo 2026 mein kaam kar raha hai
+    if (!apiKey) throw new Error("API_KEY_MISSING_IN_SUPABASE");
+
+    // Sabse stable URL
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: userText }] }]
-      }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: userText }] }] }),
     });
 
     const data = await response.json();
 
-    // Agar Google ne koi error diya toh use direct dikhao
     if (data.error) {
-      return new Response(JSON.stringify({ content: `Google ne bola: ${data.error.message}` }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ content: `Google Error: ${data.error.message}` }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Response nikalna
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne khali jawab bheja hai.";
-
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Google ne koi text nahi bheja.";
+    
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (e) {
-    return new Response(JSON.stringify({ content: `Server Error: ${e.message}` }), {
+    // Agar crash hua toh error ko message bana do
+    return new Response(JSON.stringify({ content: `Backend Error: ${e.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
