@@ -13,8 +13,8 @@ serve(async (req) => {
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     const userText = messages[messages.length - 1].content;
 
-    // NAYA URL: v1beta ki jagah v1 use kar rahe hain
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // SABSE STABLE URL: v1beta + gemini-1.5-flash-latest
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -26,20 +26,19 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    if (data.error) {
-      return new Response(JSON.stringify({ content: `Google Error: ${data.error.message}` }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Agar model nahi mila toh fallback to 'gemini-pro'
+    if (data.error && data.error.message.includes("not found")) {
+       return new Response(JSON.stringify({ content: "Google Flash model nahi mil raha. Ek baar API Key check karein ya Gemini Pro try karein." }), { headers: corsHeaders });
     }
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "AI ne jawab nahi diya.";
+    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "AI ne koi text generate nahi kiya.";
 
     return new Response(JSON.stringify({ content: aiText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (e) {
-    return new Response(JSON.stringify({ content: `Error: ${e.message}` }), {
+    return new Response(JSON.stringify({ content: `Backend Error: ${e.message}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
