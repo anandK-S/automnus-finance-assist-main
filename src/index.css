@@ -1,0 +1,106 @@
+/* Sabse upar Font import hona chahiye */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    /* ... baki ka code jo pehle se tha ... */
+
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 30% 10%;
+
+    --primary: 152 55% 28%;
+    --primary-foreground: 60 30% 96%;
+
+    --secondary: 42 80% 55%;
+    --secondary-foreground: 30 60% 12%;
+
+    --muted: 140 12% 92%;
+    --muted-foreground: 160 10% 45%;
+
+    --accent: 42 80% 55%;
+    --accent-foreground: 30 60% 12%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 140 12% 88%;
+    --input: 140 12% 88%;
+    --ring: 152 55% 28%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 152 40% 12%;
+    --sidebar-foreground: 140 20% 90%;
+    --sidebar-primary: 42 80% 55%;
+    --sidebar-primary-foreground: 30 60% 12%;
+    --sidebar-accent: 152 30% 18%;
+    --sidebar-accent-foreground: 140 20% 90%;
+    --sidebar-border: 152 25% 20%;
+    --sidebar-ring: 42 80% 55%;
+
+    /* Custom tokens */
+    --success: 152 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 60% 12%;
+    --info: 210 80% 52%;
+    --info-foreground: 0 0% 100%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(152, 55%, 28%), hsl(152, 45%, 38%));
+    --gradient-gold: linear-gradient(135deg, hsl(42, 80%, 55%), hsl(38, 90%, 62%));
+    --gradient-hero: linear-gradient(135deg, hsl(152, 40%, 12%), hsl(152, 55%, 22%), hsl(42, 60%, 40%));
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%), hsl(140, 15%, 96%));
+
+    --shadow-card: 0 1px 3px hsl(152 20% 20% / 0.06), 0 4px 12px hsl(152 20% 20% / 0.04);
+    --shadow-elevated: 0 4px 16px hsl(152 20% 20% / 0.08), 0 12px 40px hsl(152 20% 20% / 0.06);
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-gold {
+    background: var(--gradient-gold);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+}

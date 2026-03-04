@@ -1,0 +1,7 @@
+project_id = "eiaugageesdlovlzpqmu"
+
+[functions.ocr-receipt]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false

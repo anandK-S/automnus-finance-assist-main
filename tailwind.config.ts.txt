@@ -1,0 +1,16 @@
+import type { Config } from "tailwindcss";
+
+export default {
+  // YEH LINE ZAROORI HAI: Taki manual toggle kaam kare
+  darkMode: ["class"], 
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  theme: {
+    // ... aapka purana theme config yahan rahega
+  },
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config;
